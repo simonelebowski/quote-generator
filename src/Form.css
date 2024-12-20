@@ -1,0 +1,10 @@
+.form-container {
+  text-align: left;
+  width: 250px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

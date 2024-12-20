@@ -1,0 +1,12 @@
+.accommodation-container,
+.accommodationcomponent-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.accommodationweeks-container {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
