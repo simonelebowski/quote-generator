@@ -1,42 +1,7 @@
-// -------------------- Types --------------------
-export interface CoursePricingTier {
-  minWeeks: number; // inclusive
-  maxWeeks?: number; // inclusive; if undefined, open-ended
-  weeklyPrice: number;
-}
-
-export interface Course {
-  id: string;
-  name: string;
-  tiers: CoursePricingTier[];
-}
-
-export interface Accommodation {
-  id: string;
-  name: string;
-  weeklyPrice: number;
-  placementFee?: number; // can be handled as an extra too
-}
-
-export interface Destination {
-  id: string;
-  name: string;
-  address: string;
-  postcode: string; 
-  telephone: string,
-  email: string,
-  courses: Course[];
-  accommodations: Accommodation[];
-  extras: ExtraBase[]; // textbook, insurance, registration, etc.
-  transfers?: {
-    airportName: string;
-    oneWay: number;
-    return: number;
-  };
-}
+import { School } from "@/types/quote";
 
 // -------------------- Sample Data --------------------
-export const destinations: Destination[] = [
+export const destinations: School[] = [
   {
     id: "worthing",
     name: "Worthing",
@@ -60,56 +25,74 @@ export const destinations: Destination[] = [
         id: "ige",
         name: "Intensive General English",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 355 },
-          { minWeeks: 5, maxWeeks: 11, price: 335 },
-          { minWeeks: 12, maxWeeks: 23, price: 325 },
-          { minWeeks: 24, maxWeeks: 35, price: 315 },
-          { minWeeks: 36, maxWeeks: 49, price: 305 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 355 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 335 },
+          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 325 },
+          { minWeeks: 24, maxWeeks: 35, weeklyPrice: 315 },
+          { minWeeks: 36, maxWeeks: 49, weeklyPrice: 305 },
         ],
       },
            {
         id: "combination",
         name: "Combination Course",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 585 },
-          { minWeeks: 5, maxWeeks: 11, price: 575 },
-          { minWeeks: 12, maxWeeks: 49, price: 565 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 585 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 575 },
+          { minWeeks: 12, maxWeeks: 49, weeklyPrice: 565 },
         ],
       },
            {
         id: "ielts",
         name: "IELTS Preparation Course",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 355 },
-          { minWeeks: 5, maxWeeks: 11, price: 335 },
-          { minWeeks: 12, maxWeeks: 23, price: 325 },
-          { minWeeks: 24, maxWeeks: 35, price: 315 },
-          { minWeeks: 36, maxWeeks: 49, price: 305 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 355 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 335 },
+          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 325 },
+          { minWeeks: 24, maxWeeks: 35, weeklyPrice: 315 },
+          { minWeeks: 36, maxWeeks: 49, weeklyPrice: 305 },
         ],
       },
                  {
         id: "cambridge",
         name: "Cambridge Exam Preparation Course",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 585 },
-          { minWeeks: 5, maxWeeks: 11, price: 575 },
-          { minWeeks: 12, maxWeeks: 49, price: 565 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 585 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 575 },
+          { minWeeks: 12, maxWeeks: 49, weeklyPrice: 565 },
         ],
       },
           {
       id: "junior",
       name: "Junior Programme",
-      priceRules: [
-        { minWeeks: 1, maxWeeks: 2, price: 526.5 },
-        { minWeeks: 3, maxWeeks: 3, price: 525.34 },
-        { minWeeks: 4, maxWeeks: 4, price: 518.5 },
-        { minWeeks: 5, maxWeeks: 9, price: 515 },
+      tiers: [
+        { minWeeks: 1, maxWeeks: 2, weeklyPrice: 526.5 },
+        { minWeeks: 3, maxWeeks: 3, weeklyPrice: 525.34 },
+        { minWeeks: 4, maxWeeks: 4, weeklyPrice: 518.5 },
+        { minWeeks: 5, maxWeeks: 9, weeklyPrice: 515 },
       ],
     },
     ],
     accommodation: [
     { id: "single", name: "Homestay Single Room Half-Board", weeklyPrice: 240 },
     { id: "shared", name: "Homestay Shared Room Half-Board", weeklyPrice: 215 },
+    ],
+    transfers: [
+      {
+        code:'LHR',
+        name: 'Heathrow',
+        prices: {
+          oneWay: { 1: 95, 2: 130, 3: 160 },
+          return: { 1: 170, 2: 240, 3: 300 },
+        }
+      },
+      {
+        code: 'LGW',
+        name: 'Gatwick',
+        prices: {
+          oneWay: { 1: 80, 2: 110, 3: 135 },
+          return: { 1: 145, 2: 205, 3: 260 },
+        },
+      }
     ]
     },
     {
@@ -124,51 +107,51 @@ export const destinations: Destination[] = [
         id: "sge",
         name: "Standard General English",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 275 },
-          { minWeeks: 5, maxWeeks: 11, price: 265 },
-          { minWeeks: 12, maxWeeks: 23, price: 255 },
-          { minWeeks: 24, maxWeeks: 35, price: 250 },
-          { minWeeks: 36, maxWeeks: 49, price: 240 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 275 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 265 },
+          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 255 },
+          { minWeeks: 24, maxWeeks: 35, weeklyPrice: 250 },
+          { minWeeks: 36, maxWeeks: 49, weeklyPrice: 240 },
         ],
       },
            {
         id: "ige",
         name: "Intensive General English",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 390 },
-          { minWeeks: 5, maxWeeks: 11, price: 370 },
-          { minWeeks: 12, maxWeeks: 23, price: 365 },
-          { minWeeks: 24, maxWeeks: 35, price: 355 },
-          { minWeeks: 36, maxWeeks: 49, price: 345 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 390 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 370 },
+          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 365 },
+          { minWeeks: 24, maxWeeks: 35, weeklyPrice: 355 },
+          { minWeeks: 36, maxWeeks: 49, weeklyPrice: 345 },
         ],
       },
            {
         id: "combination",
         name: "Combination Course",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 615 },
-          { minWeeks: 5, maxWeeks: 11, price: 605 },
-          { minWeeks: 12, maxWeeks: 49, price: 595 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 615 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 605 },
+          { minWeeks: 12, maxWeeks: 49, weeklyPrice: 595 },
         ],
       },
            {
         id: "ielts",
         name: "IELTS Preparation Course",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 390 },
-          { minWeeks: 5, maxWeeks: 11, price: 370 },
-          { minWeeks: 12, maxWeeks: 23, price: 365 },
-          { minWeeks: 24, maxWeeks: 35, price: 355 },
-          { minWeeks: 36, maxWeeks: 49, price: 345 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 390 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 370 },
+          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 365 },
+          { minWeeks: 24, maxWeeks: 35, weeklyPrice: 355 },
+          { minWeeks: 36, maxWeeks: 49, weeklyPrice: 345 },
         ],
       },
                  {
         id: "cambridge",
         name: "Cambridge Exam Preparation Course",
         tiers: [
-          { minWeeks: 1, maxWeeks: 4, price: 615 },
-          { minWeeks: 5, maxWeeks: 11, price: 605 },
-          { minWeeks: 12, maxWeeks: 49, price: 595 },
+          { minWeeks: 1, maxWeeks: 4, weeklyPrice: 615 },
+          { minWeeks: 5, maxWeeks: 11, weeklyPrice: 605 },
+          { minWeeks: 12, maxWeeks: 49, weeklyPrice: 595 },
         ],
       },
     ],
@@ -185,6 +168,24 @@ export const destinations: Destination[] = [
       name: "Premium Homestay shared room half board",
       weeklyPrice: 275,
     },
+    ],
+        transfers: [
+      {
+        code:'LHR',
+        name: 'Heathrow',
+        prices: {
+          oneWay: { 1: 95, 2: 130, 3: 160 },
+          return: { 1: 170, 2: 240, 3: 300 },
+        }
+      },
+      {
+        code: 'LGW',
+        name: 'Gatwick',
+        prices: {
+          oneWay: { 1: 80, 2: 110, 3: 135 },
+          return: { 1: 145, 2: 205, 3: 260 },
+        },
+      }
     ]
     },
   ]
