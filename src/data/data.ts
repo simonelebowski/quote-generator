@@ -1,7 +1,7 @@
 import { School } from "@/types/quote";
 
 // -------------------- Sample Data --------------------
-export const destinations: School[] = [
+export const SCHOOLS: School[] = [
   {
     id: "worthing",
     name: "Worthing",
@@ -9,6 +9,7 @@ export const destinations: School[] = [
     postcode: "BN11 1HE",
     telephone: "+44 (0) 1903 231330",
     email: "registrar@ces-schools.com",
+    currency: '£',
     courses: [
       {
         id: "sge",
@@ -72,7 +73,7 @@ export const destinations: School[] = [
       ],
     },
     ],
-    accommodation: [
+    accommodations: [
     { id: "single", name: "Homestay Single Room Half-Board", weeklyPrice: 240 },
     { id: "shared", name: "Homestay Shared Room Half-Board", weeklyPrice: 215 },
     ],
@@ -102,6 +103,7 @@ export const destinations: School[] = [
     postcode: "SW19 3NW",
     telephone: "+44 (0) 20 8543 5150",
     email: "registrar@ces-schools.com",
+    currency: '£',
     courses: [
       {
         id: "sge",
@@ -155,7 +157,7 @@ export const destinations: School[] = [
         ],
       },
     ],
-    accommodation: [
+    accommodations: [
     { id: "single", name: "Homestay Single Room Half-Board", weeklyPrice: 280 },
     { id: "shared", name: "Homestay shared room half board", weeklyPrice: 235 },
     {

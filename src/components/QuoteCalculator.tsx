@@ -1,214 +1,21 @@
 "use client"
 import { useEffect, useMemo, useState } from "react";
+import { SCHOOLS } from "@/data/data";
+import { GLOBAL_EXTRAS } from "@/data/globals";
 import { getWeeklyPriceForWeeks } from "@/lib/pricing";
+import { calcTransferTotal } from "@/lib/pricing";
 import { formatCurrency, makeQuoteId } from "@/lib/currency";
 import { loadSavedQuotes, saveQuotes } from "@/lib/quotes";
 import MainSection from "./MainSection";
 import QuoteSummary from "./QuoteSummary";
+import {
+  TransferOption,
+  PartySize,
+  Quote,
+  QuoteLineItem,
+  QuoteStateSnapshot,
+} from "@/types/quote";
 
-// Next.js + TS + React single-file demo component with Save/Load
-// Drop this file into /app/quote/page.tsx (App Router) or /pages/quote.tsx (Pages Router)
-// Tailwind CSS recommended for styling.
-
-// -------------------- Types --------------------
-type ExtraType = "flat" | "per_week" | "per_transfer";
-
-type TransferOption = "none" | "one_way" | "return";
-
-interface ExtraBase {
-  id: string;
-  name: string;
-  type: ExtraType;
-  amount: number; // currency amount; for per_week it's per week; for per_transfer it's per single trip
-  defaultSelected?: boolean;
-}
-
-interface CoursePricingTier {
-  minWeeks: number; // inclusive
-  maxWeeks?: number; // inclusive; if undefined, open-ended
-  weeklyPrice: number;
-}
-
-interface Course {
-  id: string;
-  name: string;
-  tiers: CoursePricingTier[];
-}
-
-interface Accommodation {
-  id: string;
-  name: string;
-  weeklyPrice: number;
-  placementFee?: number; // can be handled as an extra too
-}
-
-interface School {
-  id: string;
-  name: string;
-  location: string;
-  currency: string; // currency symbol for display (e.g., "£", "€", "$" )
-  courses: Course[];
-  accommodations: Accommodation[];
-  extras: ExtraBase[]; // textbook, insurance, registration, etc.
-  transfers?: {
-    airportName: string;
-    oneWay: number;
-    return: number;
-  };
-}
-
-interface QuoteLineItem {
-  label: string;
-  amount: number;
-}
-
-interface QuoteStateSnapshot {
-  schoolId: string;
-  courseId: string;
-  weeks: number;
-  accommodationId: string | "none";
-  accomWeeks: number;
-  transfer: TransferOption;
-  selectedExtras: Record<string, boolean>;
-}
-
-interface Quote {
-  id: string; // human readable (e.g. Q-2025-10-27-123456)
-  createdAt: string; // ISO
-  schoolName: string;
-  courseName: string;
-  currency: string;
-  totals: {
-    tuition: number;
-    accommodation: number;
-    registrationFee: number;
-    textbookFee: number;
-    insurance: number;
-    accomPlacement: number;
-    transfers: number;
-    grandTotal: number;
-  };
-  items: QuoteLineItem[];
-  params: QuoteStateSnapshot; // to restore UI
-  shareUrl?: string; // state-encoded link
-}
-
-// -------------------- Sample Data --------------------
-const SCHOOLS: School[] = [
-  {
-    id: "london-language-centre",
-    name: "London Language Centre",
-    location: "London, UK",
-    currency: "£",
-    courses: [
-      {
-        id: "general-english",
-        name: "General English",
-        tiers: [
-          { minWeeks: 1, maxWeeks: 11, weeklyPrice: 230 },
-          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 210 },
-          { minWeeks: 24, weeklyPrice: 195 },
-        ],
-      },
-      {
-        id: "ielts-prep",
-        name: "IELTS Preparation",
-        tiers: [
-          { minWeeks: 1, maxWeeks: 11, weeklyPrice: 260 },
-          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 235 },
-          { minWeeks: 24, weeklyPrice: 220 },
-        ],
-      },
-    ],
-    accommodations: [
-      { id: "host-family", name: "Host Family (Half-board)", weeklyPrice: 220, placementFee: 65 },
-      { id: "student-residence", name: "Student Residence (Self-catered)", weeklyPrice: 280, placementFee: 85 },
-    ],
-    extras: [
-      { id: "registration", name: "Registration Fee", type: "flat", amount: 60, defaultSelected: true },
-      { id: "textbook", name: "Textbook", type: "flat", amount: 35 },
-      { id: "insurance", name: "Insurance (per week)", type: "per_week", amount: 8 },
-      { id: "accom-placement", name: "Accommodation Placement Fee", type: "flat", amount: 65 },
-    ],
-    transfers: {
-      airportName: "Heathrow (LHR)",
-      oneWay: 85,
-      return: 150,
-    },
-  },
-  {
-    id: "dublin-english-academy",
-    name: "Dublin English Academy",
-    location: "Dublin, Ireland",
-    currency: "€",
-    courses: [
-      {
-        id: "general-english",
-        name: "General English",
-        tiers: [
-          { minWeeks: 1, maxWeeks: 11, weeklyPrice: 210 },
-          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 195 },
-          { minWeeks: 24, weeklyPrice: 180 },
-        ],
-      },
-      {
-        id: "business-english",
-        name: "Business English",
-        tiers: [
-          { minWeeks: 1, maxWeeks: 11, weeklyPrice: 270 },
-          { minWeeks: 12, weeklyPrice: 245 },
-        ],
-      },
-    ],
-    accommodations: [
-      { id: "host-family", name: "Host Family (Half-board)", weeklyPrice: 240, placementFee: 50 },
-      { id: "residence", name: "City Residence (En-suite)", weeklyPrice: 320, placementFee: 90 },
-    ],
-    extras: [
-      { id: "registration", name: "Registration Fee", type: "flat", amount: 50, defaultSelected: true },
-      { id: "textbook", name: "Textbook", type: "flat", amount: 40 },
-      { id: "insurance", name: "Insurance (per week)", type: "per_week", amount: 7 },
-      { id: "accom-placement", name: "Accommodation Placement Fee", type: "flat", amount: 50 },
-    ],
-    transfers: {
-      airportName: "Dublin (DUB)",
-      oneWay: 60,
-      return: 110,
-    },
-  },
-  {
-    id: "new-york-language-school",
-    name: "New York Language School",
-    location: "New York, USA",
-    currency: "$",
-    courses: [
-      {
-        id: "intensive-english",
-        name: "Intensive English",
-        tiers: [
-          { minWeeks: 1, maxWeeks: 11, weeklyPrice: 360 },
-          { minWeeks: 12, maxWeeks: 23, weeklyPrice: 330 },
-          { minWeeks: 24, weeklyPrice: 310 },
-        ],
-      },
-    ],
-    accommodations: [
-      { id: "homestay", name: "Homestay (Breakfast)", weeklyPrice: 300, placementFee: 90 },
-      { id: "residence", name: "Residence (Shared)", weeklyPrice: 420, placementFee: 120 },
-    ],
-    extras: [
-      { id: "registration", name: "Registration Fee", type: "flat", amount: 120, defaultSelected: true },
-      { id: "textbook", name: "Textbook", type: "flat", amount: 55 },
-      { id: "insurance", name: "Insurance (per week)", type: "per_week", amount: 12 },
-      { id: "accom-placement", name: "Accommodation Placement Fee", type: "flat", amount: 90 },
-    ],
-    transfers: {
-      airportName: "JFK",
-      oneWay: 95,
-      return: 170,
-    },
-  },
-];
 
 // -------------------- Component --------------------
 export default function QuoteCalculator(): JSX.Element {
@@ -219,6 +26,8 @@ export default function QuoteCalculator(): JSX.Element {
   const [accommodationId, setAccommodationId] = useState<string | "none">("none");
   const [accomWeeks, setAccomWeeks] = useState<number>(4);
   const [transfer, setTransfer] = useState<TransferOption>("none");
+  const [airportCode, setAirportCode] = useState<string>(""); 
+  const [partySize, setPartySize] = useState<PartySize>(1);
   const [selectedExtras, setSelectedExtras] = useState<Record<string, boolean>>({});
 
   const [saved, setSaved] = useState<Quote[]>([]);
@@ -227,8 +36,9 @@ export default function QuoteCalculator(): JSX.Element {
   const school = useMemo(() => SCHOOLS.find((s) => s.id === schoolId)!, [schoolId]);
   const course = useMemo(() => school.courses.find((c) => c.id === courseId)!, [school, courseId]);
   const accommodation = useMemo(() => school.accommodations.find((a) => a.id === accommodationId), [school, accommodationId]);
+  const airport = useMemo(() => school.transfers?.find(a => a.code === airportCode), [school, airportCode]);
 
-  // Initialize defaults when component mounts and when school changes
+  // Initialise defaults when component mounts and when school changes
   useEffect(() => {
     setSaved(loadSavedQuotes());
   }, []);
@@ -237,17 +47,12 @@ export default function QuoteCalculator(): JSX.Element {
     setCourseId(school.courses[0]?.id ?? "");
     setAccommodationId("none");
     setAccomWeeks(weeks);
-    const init: Record<string, boolean> = {};
-    school.extras.forEach((e) => {
-      if (e.defaultSelected) init[e.id] = true;
-    });
-    setSelectedExtras(init);
+    setAirportCode("");
     setTransfer("none");
-  }, [
-    
-
-
-  ]);
+    setPartySize(1);
+    const init: Record<string, boolean> = { registration: true };
+    setSelectedExtras(init);
+  }, []);
 
   // Keep accom weeks aligned by default with course weeks
   useEffect(() => {
@@ -265,10 +70,12 @@ export default function QuoteCalculator(): JSX.Element {
     params.set("accommodation", accommodationId);
     params.set("accomWeeks", String(accomWeeks));
     params.set("transfer", transfer);
+    params.set("airport", airportCode);
+    params.set("party", String(partySize));
     Object.entries(selectedExtras).forEach(([k, v]) => v && params.append("extra", k));
     const url = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState(null, "Quote", url);
-  }, [schoolId, courseId, weeks, accommodationId, accomWeeks, transfer, selectedExtras]);
+  }, [schoolId, courseId, weeks, accommodationId, accomWeeks, transfer, selectedExtras, airportCode, partySize]);
 
   // URL hydrate
   useEffect(() => {
@@ -281,6 +88,8 @@ export default function QuoteCalculator(): JSX.Element {
     const aw = qs.get("accomWeeks");
     const t = qs.get("transfer");
     const ex = qs.getAll("extra");
+    const ap = qs.get("airport");
+    const ps = qs.get("party");
 
     if (s && SCHOOLS.some((x) => x.id === s)) setSchoolId(s);
     if (c) setCourseId(c);
@@ -289,6 +98,8 @@ export default function QuoteCalculator(): JSX.Element {
     if (aw) setAccomWeeks(Number(aw));
     if (t) setTransfer(t as TransferOption);
     if (ex.length) setSelectedExtras(Object.fromEntries(ex.map((e) => [e, true])));
+    if (ap) setAirportCode(ap);
+    if (ps) setPartySize(Number(ps) as PartySize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -299,29 +110,12 @@ export default function QuoteCalculator(): JSX.Element {
   const accomWeekly = accommodation?.weeklyPrice ?? 0;
   const accomTotal = accommodation ? accomWeekly * accomWeeks : 0;
 
-  const registrationFee = selectedExtras["registration"]
-    ? school.extras.find((e) => e.id === "registration")?.amount ?? 0
-    : 0;
-
-  const textbookFee = selectedExtras["textbook"]
-    ? school.extras.find((e) => e.id === "textbook")?.amount ?? 0
-    : 0;
-
-  const insurancePerWeek = selectedExtras["insurance"]
-    ? school.extras.find((e) => e.id === "insurance")?.amount ?? 0
-    : 0;
+  const registrationFee = selectedExtras["registration"] ? GLOBAL_EXTRAS.registration : 0;
+  const textbookFee = selectedExtras["textbook"]     ? GLOBAL_EXTRAS.textbook     : 0;
+  const insurancePerWeek = selectedExtras["insurance"] ? GLOBAL_EXTRAS.insurancePerWeek : 0;
   const insuranceTotal = insurancePerWeek * weeks;
-
-  const accomPlacement = selectedExtras["accom-placement"]
-    ? school.extras.find((e) => e.id === "accom-placement")?.amount ?? 0
-    : 0;
-
-  const transferTotal = (() => {
-    if (!school.transfers) return 0;
-    if (transfer === "one_way") return school.transfers.oneWay;
-    if (transfer === "return") return school.transfers.return;
-    return 0;
-  })();
+  const accomPlacement = selectedExtras["accom-placement"] ? GLOBAL_EXTRAS.accomPlacement : 0;
+  const transferTotal = calcTransferTotal(airport, transfer, partySize);
 
   const subtotal = tuition + accomTotal + registrationFee + textbookFee + insuranceTotal + accomPlacement + transferTotal;
 
@@ -344,6 +138,8 @@ export default function QuoteCalculator(): JSX.Element {
       accomWeeks,
       transfer,
       selectedExtras,
+      airportCode,     // NEW
+      partySize,       // NEW
     };
 
     const shareUrl = typeof window !== "undefined" ? window.location.href : undefined;
@@ -386,6 +182,8 @@ export default function QuoteCalculator(): JSX.Element {
     setAccomWeeks(q.params.accomWeeks);
     setTransfer(q.params.transfer);
     setSelectedExtras(q.params.selectedExtras);
+    setAirportCode(q.params.airportCode ?? "");
+    setPartySize((q.params.partySize as PartySize) ?? 1);
   }
 
   function deleteQuote(id: string) {
@@ -407,7 +205,6 @@ export default function QuoteCalculator(): JSX.Element {
 
   // -------------- UI helpers --------------
   const currency = school.currency;
-  const label = (s: string) => <span className="text-sm font-medium text-gray-700">{s}</span>;
 
   // -------------- Render --------------
   return (
@@ -439,6 +236,10 @@ export default function QuoteCalculator(): JSX.Element {
             setTransfer={setTransfer}
             weeklyCoursePrice={weeklyCoursePrice}
             currency={school.currency}
+            airportCode={airportCode}
+            setAirportCode={setAirportCode}
+            partySize={partySize}
+            setPartySize={setPartySize}
           />
 
           {/* Right: Summary */}
@@ -463,6 +264,8 @@ export default function QuoteCalculator(): JSX.Element {
             subtotal={subtotal}
             handleSaveQuote={handleSaveQuote}
             exportQuote={exportQuote}
+            airport={airport}
+            partySize={partySize}
           />
         </div>
 

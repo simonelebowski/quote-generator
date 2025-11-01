@@ -1,3 +1,4 @@
+import { GLOBAL_EXTRAS } from "@/data/globals";
 import { formatCurrency } from "@/lib/currency";
 
 // -------------- UI helpers --------------
@@ -15,8 +16,17 @@ export default function MainSection({
     selectedExtras, setSelectedExtras,
     transfer, setTransfer,
     weeklyCoursePrice,
-    currency
+    currency,
+    airportCode,
+    setAirportCode,
+    partySize,
+    setPartySize,
 }) {
+const registrationFee = selectedExtras["registration"] ? GLOBAL_EXTRAS.registration : 0;
+const textbookFee     = selectedExtras["textbook"]     ? GLOBAL_EXTRAS.textbook     : 0;
+const insuranceTotal  = (selectedExtras["insurance"] ? GLOBAL_EXTRAS.insurancePerWeek : 0) * weeks;
+const accomPlacement  = selectedExtras["accom-placement"] ? GLOBAL_EXTRAS.accomPlacement : 0;
+
     return (
           <section className="lg:col-span-2 rounded-2xl bg-white p-5 shadow">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -104,7 +114,7 @@ export default function MainSection({
                                 setSelectedExtras((prev) => ({ ...prev, registration: e.target.checked }))
                               }
                             />
-                            <span>Registration Fee ({formatCurrency(currency, school.extras.find((e) => e.id === "registration")?.amount || 0)})</span>
+                            <span>Registration Fee ({formatCurrency(currency, registrationFee)})</span>
                           </label>
         
                           <label className="flex items-center gap-2">
@@ -114,7 +124,7 @@ export default function MainSection({
                               checked={!!selectedExtras["textbook"]}
                               onChange={(e) => setSelectedExtras((prev) => ({ ...prev, textbook: e.target.checked }))}
                             />
-                            <span>Textbook ({formatCurrency(currency, school.extras.find((e) => e.id === "textbook")?.amount || 0)})</span>
+                            <span>Textbook ({formatCurrency(currency, textbookFee)})</span>
                           </label>
         
                           <label className="flex items-center gap-2">
@@ -124,7 +134,7 @@ export default function MainSection({
                               checked={!!selectedExtras["insurance"]}
                               onChange={(e) => setSelectedExtras((prev) => ({ ...prev, insurance: e.target.checked }))}
                             />
-                            <span>Insurance ({formatCurrency(currency, school.extras.find((e) => e.id === "insurance")?.amount || 0)}/week)</span>
+                            <span>Insurance ({formatCurrency(currency, insuranceTotal)}/week)</span>
                           </label>
         
                           <label className="flex items-center gap-2">
@@ -139,34 +149,65 @@ export default function MainSection({
                             <span>
                               Accommodation Placement Fee ({formatCurrency(
                                 currency,
-                                school.extras.find((e) => e.id === "accom-placement")?.amount || 0
+                                accomPlacement
                               )})
                             </span>
                           </label>
         
                           {school.transfers && (
                             <div className="col-span-2">
-                              <div className="mb-1 text-sm font-medium">Airport Transfer ({school.transfers.airportName})</div>
-                              <div className="flex flex-wrap gap-2">
-                                {(
-                                  [
-                                    { key: "none", label: "No transfer" },
-                                    { key: "one_way", label: `One-way (${formatCurrency(currency, school.transfers.oneWay)})` },
-                                    { key: "return", label: `Return (${formatCurrency(currency, school.transfers.return)})` },
-                                  ] as { key: TransferOption; label: string }[]
-                                ).map((opt) => (
-                                  <button
-                                    key={opt.key}
-                                    type="button"
-                                    onClick={() => setTransfer(opt.key)}
-                                    className={`rounded-full border px-3 py-1 text-sm ${
-                                      transfer === opt.key ? "border-blue-600 bg-blue-50" : "border-gray-300"
-                                    }`}
-                                  >
-                                    {opt.label}
-                                  </button>
-                                ))}
-                              </div>
+                              <div className="mb-2 text-sm font-semibold">Airport Transfer</div>
+                                <div className="grid gap-3 md:grid-cols-3">
+                                  {/* Airport */}
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-700">Airport</label>
+                                    <select
+                                      className="mt-1 w-full rounded-xl border border-gray-300 p-2"
+                                      value={airportCode}
+                                      onChange={(e) => setAirportCode(e.target.value)}
+                                    >
+                                      <option value="">Select airport</option>
+                                      {school.transfers.map((a) => (
+                                        <option key={a.code} value={a.code}>
+                                          {a.name} ({a.code})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* Trip type */}
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-700">Trip</label>
+                                    <div className="mt-1 flex gap-2">
+                                      {(["none", "one_way", "return"] as const).map((opt) => (
+                                        <button
+                                          key={opt}
+                                          type="button"
+                                          onClick={() => setTransfer(opt)}
+                                          className={`rounded-full border px-3 py-1 text-sm ${
+                                            transfer === opt ? "border-blue-600 bg-blue-50" : "border-gray-300"
+                                          }`}
+                                        >
+                                          {opt === "none" ? "No transfer" : opt === "one_way" ? "One-way" : "Return"}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Party size */}
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-700">Students</label>
+                                    <select
+                                      className="mt-1 w-full rounded-xl border border-gray-300 p-2"
+                                      value={partySize}
+                                      onChange={(e) => setPartySize(Number(e.target.value) as 1 | 2 | 3)}
+                                    >
+                                      <option value={1}>1 student</option>
+                                      <option value={2}>2 students</option>
+                                      <option value={3}>3 students</option>
+                                    </select>
+                                  </div>
+                                </div>
                             </div>
                           )}
                         </div>

@@ -19,8 +19,9 @@ export interface School {
   postcode: string; 
   telephone: string,
   email: string,
+  currency: string;
   courses: Course[];
-  accommodation: Accommodation[];
+  accommodations: Accommodation[];
   extras?: ExtraBase[]; // textbook, insurance, registration, etc.
   transfers?: TransferAirport[];
 }
